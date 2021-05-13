@@ -33,13 +33,13 @@ public class EventThrottler implements Throttler{
 
     private final long minLatency;
     private final Clock clock;
-    private volatile long lastReceived;
+    private volatile long lastProcessed;
 
     public EventThrottler(long minLatency, Clock clock) {
         dispatcher = Executors.newSingleThreadExecutor();
         this.minLatency = minLatency;
         this.clock = clock;
-        lastReceived = 0l;
+        lastProcessed = 0l;
     }
 
     public List<Event> getEvents() {
@@ -48,8 +48,8 @@ public class EventThrottler implements Throttler{
 
     @Override
     public ThrottleResult shouldProceed() {
-        System.out.println(clock.now() + ", last:" + lastReceived + ", min:" +minLatency + ", diff=" + (clock.now() - lastReceived) + ", proceed=" + ((clock.now() - lastReceived) > minLatency));
-        return ((clock.now() - lastReceived) > minLatency) ? ThrottleResult.PROCEED : ThrottleResult.DO_NOT_PROCEED;
+        System.out.println(clock.now() + ", last:" + lastProcessed + ", min:" +minLatency + ", diff=" + (clock.now() - lastProcessed) + ", proceed=" + ((clock.now() - lastProcessed) > minLatency));
+        return ((clock.now() - lastProcessed) > minLatency) ? ThrottleResult.PROCEED : ThrottleResult.DO_NOT_PROCEED;
     }
 
     @Override
@@ -70,11 +70,11 @@ public class EventThrottler implements Throttler{
     private void checkCanProceed() {
         dispatcher.execute(() -> {
             try{
-                long currentTime = clock.now();
+//                long currentTime = clock.now();
                 if(shouldProceed() == ThrottleResult.PROCEED) {
                     notifyCanProceed();
                 }
-                lastReceived = currentTime;
+//                lastProcessed = currentTime;
             }
             catch(Throwable t) {
                 t.printStackTrace();
@@ -83,13 +83,16 @@ public class EventThrottler implements Throttler{
     }
 
     private void notifyCanProceed() {
-        List<Event> events = drainEvents();
-        interestedParties.stream().forEach(interestedParty -> interestedParty.accept(events));
+        if(!interestedParties.isEmpty()) {
+            List<Event> events = drainEvents();
+            interestedParties.stream().forEach(interestedParty -> interestedParty.accept(events));
+        }
     }
 
     private List<Event> drainEvents() {
         List<Event> readyEvents = new ArrayList<>();
         pendingEvents.drainTo(readyEvents);
+        lastProcessed = clock.now();
         return readyEvents;
     }
 

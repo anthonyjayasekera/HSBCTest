@@ -13,7 +13,7 @@ public class TestSlidingWindowStatisticsImpl {
 
     @Test
     public void mean() throws InterruptedException {
-        int count = 10000;
+        int count = 1000;
         SlidingWindowStatisticsImpl stats = new SlidingWindowStatisticsImpl();
         stats.start();
 
@@ -39,6 +39,7 @@ public class TestSlidingWindowStatisticsImpl {
             try {
                 synchronized (this) {
                     wait(100);
+                    System.out.println(dataPoints.size() + " data points processed.");
                 }
             }
             catch (InterruptedException e) {
@@ -52,7 +53,7 @@ public class TestSlidingWindowStatisticsImpl {
         Data lastDataPoint = null;
         for(int i=0;i<count;i++) {
             Data dataPoint = dataPoints.take();
-//            assertEquals(i+1, dataPoint.count);
+            assertEquals(i+1, dataPoint.count);
             if(i+1==count) {
                 lastDataPoint = dataPoint;
             }

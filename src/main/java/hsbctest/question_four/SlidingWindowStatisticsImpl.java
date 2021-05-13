@@ -31,8 +31,10 @@ public class SlidingWindowStatisticsImpl implements SlidingWindowStatistics {
     public SlidingWindowStatisticsImpl() {
         dispatcher = new Thread(() -> {
             try {
-                allData.add(data.take());
-                notifyStatistics();
+                while(true) {
+                    allData.add(data.take());
+                    notifyStatistics();
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -50,7 +52,6 @@ public class SlidingWindowStatisticsImpl implements SlidingWindowStatistics {
     @Override
     public void add(int measurement) {
         data.add(measurement);
-        notifyStatistics();
     }
 
     @Override
